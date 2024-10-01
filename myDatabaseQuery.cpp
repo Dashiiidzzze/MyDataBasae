@@ -32,7 +32,7 @@ void parsingQuery(const string& query, const string& filePath, const string& sch
     
     } else if (words->data[0] == "DELETE" && words->data[1] == "FROM") {
         try {
-            //ParsingDelete(*words, filePath, schemaName,jsonStructure);
+            ParsingDelete(*words, filePath, schemaName,jsonStructure);
         } catch (const exception& err) {
             cerr << err.what() << endl;
         }

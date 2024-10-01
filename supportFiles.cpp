@@ -1,4 +1,5 @@
 #include <string>
+#include <fstream>
 
 #include "include/vectorDas.h"
 
@@ -41,4 +42,21 @@ MyVector<string>* Split(const string &str, char delim) {
     }
 
     return words;
+}
+
+// проверка на занятость таблицы длугим пользоватклкм
+void BusyTable(const string& path, const string& fileName, const int rank) {
+    fstream lockFile(path + "/" + fileName);
+    if (!lockFile.is_open()) {
+        throw runtime_error("Failed to open " + (path + "/" + fileName));
+    }
+    int lock = 0;
+    lockFile >> lock;
+    if (lock == 1 && rank == 1) {
+        lockFile.close();
+        throw runtime_error("Table " + fileName + " is locked by another process");
+    } else {
+        lockFile << rank;
+    }
+    lockFile.close();
 }

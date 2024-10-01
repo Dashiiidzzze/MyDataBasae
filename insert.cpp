@@ -32,7 +32,7 @@ void TestAddition(int colLen, const MyVector<string>& tableNames, const MyMap<st
     }
 }
 
-
+/*
 // проверка на занятость таблицы длугим пользоватклкм
 void BusyTable(const string& path, const string& fileName, const int rank) {
     fstream lockFile(path + "/" + fileName);
@@ -50,7 +50,7 @@ void BusyTable(const string& path, const string& fileName, const int rank) {
     }
     lockFile.close();
 }
-
+*/
 
 int PkSequenceRead(const string& path, const bool record, const int newID) {
     fstream pkFile(path);

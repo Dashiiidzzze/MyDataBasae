@@ -1,32 +1,10 @@
-#ifndef WHERE_HPP
-#define WHERE_HPP
+#include "supportFiles.h"
+#include "where.h"
 
 #include <iostream>
 #include <string>
 
-#include "include/vectorDas.h"
-#include "supportFiles.h"
-#include "include/mapDas.h"
-
-
-// Тип узла
-enum class NodeType {
-    ConditionNode,
-    OrNode,
-    AndNode
-};
-
-// Структура
-struct Node {
-    NodeType nodeType;
-    MyVector<std::string> value;
-    Node* left;
-    Node* right;
-
-    Node(NodeType type, const MyVector<std::string> val = {}, Node* l = nullptr, Node* r = nullptr)
-        : nodeType(type), value(val), left(l), right(r) {}
-};
-
+using namespace std;
 
 std::string ApostDel(std::string str) {
     if (str[0] == '\'' && str[str.size() - 1] == '\'') {
@@ -139,6 +117,3 @@ bool isValidRow(Node* node, const MyVector<std::string>& row, const MyMap<std::s
         return false;
     }
 }
-
-
-#endif

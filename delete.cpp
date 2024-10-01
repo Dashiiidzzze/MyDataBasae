@@ -2,7 +2,7 @@
 #include <fstream>
 #include <filesystem>
 
-#include "where.hpp"
+#include "where.h"
 #include "supportFiles.h"
 #include "delete.h"
 
@@ -10,9 +10,14 @@ using namespace std;
 
 void DeleteData(MyVector<string>& tableNames, MyVector<string>& conditionList, const string& schemaName, const string& path, const MyMap<string, MyVector<string>*>& jsonStructure) {
     Node* nodeWere = getConditionTree(conditionList);
-    for (int i = 00; i < tableNames.len; i++) {
+    for (int i = 0; i < tableNames.len; i++) {
         int fileIndex = 1;
-        cout << tableNames.data[i] << endl;
+        try {
+            BusyTable(path + "/" + schemaName + "/" + tableNames.data[i], tableNames.data[i] + "_lock.txt", 1);
+        } catch (const std::exception& err) {
+            cerr << err.what() << endl;
+            return;
+        }
         while (filesystem::exists(path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + ".csv")) {
             ifstream file(path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + ".csv");
             if (!file.is_open()) {
@@ -50,6 +55,7 @@ void DeleteData(MyVector<string>& tableNames, MyVector<string>& conditionList, c
 
             fileIndex++;
         }
+        BusyTable(path + "/" + schemaName + "/" + tableNames.data[i], tableNames.data[i] + "_lock.txt", 0);
     }
 }
 
@@ -89,6 +95,4 @@ void ParsingDelete(const MyVector<string>& words, const string& filePath, const 
         cerr << err.what()<< endl;
         return;
     }
-    // проверка вывод результатов
-    cout << *tableNames << endl;
 }

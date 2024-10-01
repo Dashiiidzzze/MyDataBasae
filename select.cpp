@@ -3,9 +3,8 @@
 #include <filesystem>
 
 #include "supportFiles.h"
-#include "where.hpp"
+#include "where.h"
 #include "select.h"
-
 
 using namespace std;
 
@@ -13,6 +12,12 @@ using namespace std;
 MyVector<MyVector<string>*>* ReadTable(const string& tableName, const string& schemaName, const string& filePath, const MyVector<string>& colNames, const MyVector<string>& conditionList, const MyMap<string, MyVector<string>*>& jsonStructure, bool where) {
     MyVector<MyVector<string>*>* tabData = CreateVector<MyVector<string>*>(5, 50);
     int fileIndex = 1;
+    try {
+        BusyTable(filePath + "/" + schemaName + "/" + tableName, tableName + "_lock.txt", 1);
+    } catch (const std::exception& err) {
+        cerr << err.what() << endl;
+        return tabData;
+    }
     Node* nodeWere = getConditionTree(conditionList);
     while (filesystem::exists(filePath + "/" + schemaName + "/" + tableName + "/" + to_string(fileIndex) + ".csv")) {
         ifstream file(filePath + "/" + schemaName + "/" + tableName + "/" + to_string(fileIndex) + ".csv");
@@ -81,6 +86,7 @@ MyVector<MyVector<string>*>* ReadTable(const string& tableName, const string& sc
         file.close();
         fileIndex += 1;
     }
+    BusyTable(filePath + "/" + schemaName + "/" + tableName, tableName + "_lock.txt", 1);
     return tabData;
 }
 
@@ -132,7 +138,6 @@ void PreparationSelect(const MyVector<string>& colNames, const MyVector<string>&
         }
     }
 
-    cout << colNames << endl;
     MyVector<MyVector<string>*>* temp = CreateVector<MyVector<string>*>(tablesData->len * 2, 50);
     DecartMult(*tablesData, *temp, 0, tablesData->len);
 }

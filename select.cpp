@@ -100,7 +100,7 @@ void DecartMult(const MyVector<MyVector<MyVector<string>*>*>& tablesData, MyVect
             DecartMult(tablesData, temp, counterTab + 1, tab);
         } else {
             for (int j = 0; j < tab; j++) {
-                cout << *temp.data[j] << "\t\t";
+                cout << *temp.data[j] << std::setw(25);
             }
             cout << endl;
         }

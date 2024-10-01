@@ -32,26 +32,6 @@ void TestAddition(int colLen, const MyVector<string>& tableNames, const MyMap<st
     }
 }
 
-/*
-// проверка на занятость таблицы длугим пользоватклкм
-void BusyTable(const string& path, const string& fileName, const int rank) {
-    fstream lockFile(path + "/" + fileName);
-    if (!lockFile.is_open()) {
-        throw runtime_error("Failed to open " + (path + "/" + fileName));
-    }
-    int lock = 0;
-    lockFile >> lock;
-    cout << lock << endl;
-    if (lock == 1 && rank == 1) {
-        lockFile.close();
-        throw runtime_error("Table " + fileName + " is locked by another process");
-    } else {
-        lockFile << rank;
-    }
-    lockFile.close();
-}
-*/
-
 int PkSequenceRead(const string& path, const bool record, const int newID) {
     fstream pkFile(path);
     if (!pkFile.is_open()) {

@@ -2,6 +2,8 @@
 #define VECTORDAS_H
 
 #include <iostream>
+#include <iomanip>
+
 
 template <typename T>
 struct MyVector {
@@ -17,7 +19,7 @@ template <typename T>
 std::ostream& operator << (std::ostream& os, const MyVector<T>& vec) {
     for (int i = 0; i < vec.len; i++) {
         std::cout << vec.data[i];
-        if (i < vec.len - 1) std::cout << "\t\t";
+        if (i < vec.len - 1) std::cout << std::setw(25);
     }
     return os;
 }

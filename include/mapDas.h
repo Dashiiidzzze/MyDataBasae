@@ -24,7 +24,7 @@ struct MyMap {
     int LoadFactor;
 };
 
-// хэш-функция для ключа int
+// хэш-функция для ключа string
 template <typename TK>
 int HashCode(const TK& key) {
     unsigned long hash = 5381;

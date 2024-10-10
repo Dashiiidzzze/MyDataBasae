@@ -3,12 +3,14 @@
 
 #include "include/mapDas.h"
 #include "include/vectorDas.h"
-
+/*
 #include "readJson.h"
 #include "supportFiles.h"
 #include "select.h"
 #include "insert.h"
 #include "delete.h"
+*/
+#include "header.h"
 
 using namespace std;
 
@@ -55,7 +57,7 @@ int InputNames(string& jsonFileName, string& filePath) {
 
         try {
             if (!filesystem::exists(filePath + "/" + jsonFileName)) {
-                throw std::runtime_error("JSON file not found");
+                throw runtime_error("JSON file not found");
             } else {
                 return 0;
             }

@@ -1,3 +1,4 @@
+/*
 #include <iostream>
 #include <fstream>
 
@@ -9,7 +10,11 @@
 using json = nlohmann::json;
 
 using namespace std;
+*/
+#include "header.h"
+#include "include/json.hpp"
 
+using json = nlohmann::json;
 
 // создание директории
 void CreateDir(const string& pathToDir) {

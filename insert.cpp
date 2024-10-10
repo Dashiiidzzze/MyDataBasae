@@ -1,3 +1,4 @@
+/*
 #include <iostream>
 #include <fstream>
 
@@ -5,6 +6,9 @@
 #include "insert.h"
 
 using namespace std;
+*/
+
+#include "header.h"
 
 // удаление опострафа и проверка синтаксиса
 string ApostrovDel(string& str) {

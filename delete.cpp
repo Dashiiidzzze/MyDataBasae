@@ -1,3 +1,4 @@
+/*
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -6,7 +7,10 @@
 #include "supportFiles.h"
 #include "delete.h"
 
-using namespace std; 
+using namespace std;
+*/
+
+#include "header.h"
 
 void DeleteData(MyVector<string>& tableNames, MyVector<string>& conditionList, const string& schemaName, const string& path, const MyMap<string, MyVector<string>*>& jsonStructure) {
     Node* nodeWere = getConditionTree(conditionList);
@@ -14,7 +18,7 @@ void DeleteData(MyVector<string>& tableNames, MyVector<string>& conditionList, c
         int fileIndex = 1;
         try {
             BusyTable(path + "/" + schemaName + "/" + tableNames.data[i], tableNames.data[i] + "_lock.txt", 1);
-        } catch (const std::exception& err) {
+        } catch (const exception& err) {
             cerr << err.what() << endl;
             return;
         }
@@ -38,18 +42,18 @@ void DeleteData(MyVector<string>& tableNames, MyVector<string>& conditionList, c
                     cerr << err.what() << endl;
                     tempFile.close();
                     file.close();
-                    std::remove((path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + "_temp.csv").c_str());
+                    remove((path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + "_temp.csv").c_str());
                     return;
                 }
             }
             tempFile.close();
             file.close();
-            if (std::remove((path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + ".csv").c_str()) != 0) {
-                std::cerr << "Error deleting file" << std::endl;
+            if (remove((path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + ".csv").c_str()) != 0) {
+                cerr << "Error deleting file" << endl;
                 return;
             }
-            if (std::rename((path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + "_temp.csv").c_str(), (path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + ".csv").c_str()) != 0) {
-                std::cerr << "Error renaming file" << std::endl;
+            if (rename((path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + "_temp.csv").c_str(), (path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + ".csv").c_str()) != 0) {
+                cerr << "Error renaming file" << endl;
                 return;
             }
 

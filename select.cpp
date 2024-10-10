@@ -1,3 +1,4 @@
+/*
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -7,6 +8,8 @@
 #include "select.h"
 
 using namespace std;
+*/
+#include "header.h"
 
 // чтение таблицы из файла
 MyVector<MyVector<string>*>* ReadTable(const string& tableName, const string& schemaName, const string& filePath, const MyVector<string>& colNames, const MyVector<string>& conditionList, const MyMap<string, MyVector<string>*>& jsonStructure, bool where) {

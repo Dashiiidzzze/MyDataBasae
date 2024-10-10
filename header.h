@@ -9,6 +9,13 @@
 
 using namespace std;
 
+struct SchemaInfo {
+    string filepath;
+    string name;
+    int tuplesLimit;
+    MyMap<string, MyVector<string>*>* jsonStructure;
+};
+
 // support functions
 int Strlen(const string &str);
 string Substr(const string &str, int start, int end);
@@ -19,8 +26,8 @@ void BusyTable(const string& path, const string& fileName, const int rank);
 // reading json file
 void CreateDir(const string& pathToDir);
 void CreateFile(const string& pathToFile, const string& fileName, const string& data, bool isDirectory);
-string ReadJsonFile(const string& fileName, const string& filePath, int& tuplesLimit, MyMap<string, MyVector<string>*>& jsonStructure);
-
+//string ReadJsonFile(const string& fileName, const string& filePath, int& tuplesLimit, MyMap<string, MyVector<string>*>& jsonStructure);
+void ReadJsonFile(const string& fileName, SchemaInfo& schemaData);
 
 // where
 // Тип узла

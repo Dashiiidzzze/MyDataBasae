@@ -59,16 +59,15 @@ bool isValidRow(Node* node, const MyVector<string>& row, const MyMap<string, MyV
 MyVector<MyVector<string>*>* ReadTable(const string& tableName, const string& schemaName, const string& filePath, const MyVector<string>& colNames, const MyVector<string>& conditionList, const MyMap<string, MyVector<string>*>& jsonStructure, bool where);
 void DecartMult(const MyVector<MyVector<MyVector<string>*>*>& tablesData, MyVector<MyVector<string>*>& temp, int counterTab, int tab);
 void PreparationSelect(const MyVector<string>& colNames, const MyVector<string>& tableNames, const MyVector<string>& conditionList, const string& schemaName, const string& filePath, const MyMap<string, MyVector<string>*>& jsonStructure, bool where);
-void ParsingSelect(const MyVector<string>& words, const string& filePath, const string& schemaName, const MyMap<string, MyVector<string>*>& jsonStructure);
+void ParsingSelect(const MyVector<string>& words, const SchemaInfo& schemaData);
 
 
 // insert
 string ApostrovDel(string& str);
 void TestAddition(int colLen, const MyVector<string>& tableNames, const MyMap<string, MyVector<string>*>& jsonStructure);
 int PkSequenceRead(const string& path, const bool record, const int newID);
-void InsertInTab(MyVector<MyVector<string>*>& addData, MyVector<string>& tableNames, const string& schemaName, const int tuplesLimit, const string& filePath);
-void ParsingInsert(const MyVector<string>& words, const string& filePath, const string& schemaName, const int tuplesLimit, const MyMap<string, MyVector<string>*>& jsonStructure);
-
+void InsertInTab(MyVector<MyVector<string>*>& addData, MyVector<string>& tableNames, const SchemaInfo& schemaData);
+void ParsingInsert(const MyVector<string>& words, const SchemaInfo& schemaData);
 
 // delete
 void DeleteData(MyVector<string>& tableNames, MyVector<string>& conditionList, const string& schemaName, const string& path, const MyMap<string, MyVector<string>*>& jsonStructure);

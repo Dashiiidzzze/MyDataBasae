@@ -1,13 +1,3 @@
-/*
-#include <iostream>
-#include <fstream>
-
-#include "supportFiles.h"
-#include "insert.h"
-
-using namespace std;
-*/
-
 #include "header.h"
 
 // удаление опострафа и проверка синтаксиса
@@ -52,12 +42,13 @@ int PkSequenceRead(const string& path, const bool record, const int newID) {
 }
 
 // добавление строк в файл
-void InsertInTab(MyVector<MyVector<string>*>& addData, MyVector<string>& tableNames, const string& schemaName, const int tuplesLimit, const string& filePath) {
+void InsertInTab(MyVector<MyVector<string>*>& addData, MyVector<string>& tableNames, const SchemaInfo& schemaData) {
     for (int i = 0; i < tableNames.len; i++) {
+        string pathToCSV = schemaData.filepath + "/" + schemaData.name + "/" + tableNames.data[i];
         int lastID = 0;
         try {
-            BusyTable(filePath + "/" + schemaName + "/" + tableNames.data[i], tableNames.data[i] + "_lock.txt", 1);
-            lastID = PkSequenceRead(filePath + "/" + schemaName + "/" + tableNames.data[i] + "/" + tableNames.data[i] + "_pk_sequence.txt", false, 0);
+            BusyTable(pathToCSV, tableNames.data[i] + "_lock.txt", 1);
+            lastID = PkSequenceRead(pathToCSV + "/" + tableNames.data[i] + "_pk_sequence.txt", false, 0);
         } catch (const std::exception& err) {
             cerr << err.what() << endl;
             return;
@@ -67,10 +58,10 @@ void InsertInTab(MyVector<MyVector<string>*>& addData, MyVector<string>& tableNa
         for (int j = 0; j < addData.len; j++) {
             newID++;
             string tempPath;
-            if (lastID / tuplesLimit < newID / tuplesLimit) {
-                tempPath = filePath + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(newID / tuplesLimit + 1) + ".csv";
+            if (lastID / schemaData.tuplesLimit < newID / schemaData.tuplesLimit) {
+                tempPath = pathToCSV + "/" + to_string(newID / schemaData.tuplesLimit + 1) + ".csv";
             } else {
-                tempPath = filePath + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(lastID / tuplesLimit + 1) + ".csv";
+                tempPath = pathToCSV + "/" + to_string(lastID / schemaData.tuplesLimit + 1) + ".csv";
             }
             fstream csvFile(tempPath, ios::app);
             if (!csvFile.is_open()) {
@@ -82,13 +73,13 @@ void InsertInTab(MyVector<MyVector<string>*>& addData, MyVector<string>& tableNa
             }
             csvFile.close();
         }
-        PkSequenceRead(filePath + "/" + schemaName + "/" + tableNames.data[i] + "/" + tableNames.data[i] + "_pk_sequence.txt", true, newID);
-        BusyTable(filePath + "/" + schemaName + "/" + tableNames.data[i], tableNames.data[i] + "_lock.txt", 0);
+        PkSequenceRead(pathToCSV + "/" + tableNames.data[i] + "_pk_sequence.txt", true, newID);
+        BusyTable(pathToCSV, tableNames.data[i] + "_lock.txt", 0);
     }
 }
 
 
-void ParsingInsert(const MyVector<string>& words, const string& filePath, const string& schemaName, const int tuplesLimit, const MyMap<string, MyVector<string>*>& jsonStructure) {
+void ParsingInsert(const MyVector<string>& words, const SchemaInfo& schemaData) {
     MyVector<string>* tableNames = CreateVector<string>(5, 50);
     MyVector<MyVector<string>*>* addData = CreateVector<MyVector<string>*>(10, 50);
     bool afterValues = false;
@@ -120,7 +111,7 @@ void ParsingInsert(const MyVector<string>& words, const string& filePath, const 
                 try {
                     ApostrovDel(words.data[i]);
                     AddVector<string>(*tempData, words.data[i]);
-                    TestAddition(tempData->len, *tableNames, jsonStructure);
+                    TestAddition(tempData->len, *tableNames, *schemaData.jsonStructure);
                 } catch (const exception& err) {
                     cerr << err.what() << endl;
                     return;
@@ -131,7 +122,7 @@ void ParsingInsert(const MyVector<string>& words, const string& filePath, const 
         } else {
             countTabNames++;
             try {
-                GetMap(jsonStructure, words.data[i]);
+                GetMap(*schemaData.jsonStructure, words.data[i]);
             } catch (const exception& err) {
                 cerr << err.what() << ": table " << words.data[i] << " is missing" << endl;
                 return;
@@ -144,7 +135,7 @@ void ParsingInsert(const MyVector<string>& words, const string& filePath, const 
     }
 
     try {
-        InsertInTab(*addData, *tableNames, schemaName, tuplesLimit, filePath);
+        InsertInTab(*addData, *tableNames, schemaData);
     } catch (const exception& err) {
         cerr << err.what() << endl;
         return;

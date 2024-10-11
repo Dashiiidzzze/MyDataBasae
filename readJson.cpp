@@ -52,7 +52,6 @@ void ReadJsonFile(const string& fileName, SchemaInfo& schemaData) {
     file >> schema;
 
     // чтение имени таблицы
-    //string schemaName = schema["name"];
     schemaData.name = schema["name"];
     CreateDir(schemaData.name);
 
@@ -79,5 +78,4 @@ void ReadJsonFile(const string& fileName, SchemaInfo& schemaData) {
     }
 
     file.close();
-    //return schemaName;
 }

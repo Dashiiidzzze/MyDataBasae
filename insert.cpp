@@ -42,44 +42,53 @@ int PkSequenceRead(const string& path, const bool record, const int newID) {
 }
 
 // добавление строк в файл
-void InsertInTab(MyVector<MyVector<string>*>& addData, MyVector<string>& tableNames, const SchemaInfo& schemaData) {
+void InsertInTab(MyVector<MyVector<string>*>& addData, MyVector<string>& tableNames, SchemaInfo& schemaData) {
     for (int i = 0; i < tableNames.len; i++) {
         string pathToCSV = schemaData.filepath + "/" + schemaData.name + "/" + tableNames.data[i];
         int lastID = 0;
-        try {
-            BusyTable(pathToCSV, tableNames.data[i] + "_lock.txt", 1);
-            lastID = PkSequenceRead(pathToCSV + "/" + tableNames.data[i] + "_pk_sequence.txt", false, 0);
-        } catch (const std::exception& err) {
-            cerr << err.what() << endl;
-            return;
-        }
 
-        int newID = lastID;
-        for (int j = 0; j < addData.len; j++) {
-            newID++;
-            string tempPath;
-            if (lastID / schemaData.tuplesLimit < newID / schemaData.tuplesLimit) {
-                tempPath = pathToCSV + "/" + to_string(newID / schemaData.tuplesLimit + 1) + ".csv";
-            } else {
-                tempPath = pathToCSV + "/" + to_string(lastID / schemaData.tuplesLimit + 1) + ".csv";
+        //unique_lock<mutex> lock(schemaData.tableMutexes[tableNames.data[i]]);
+        // Захватываем мьютекс для таблицы, если она существует в tableMutexes
+        auto mutexIt = schemaData.tableMutexes.find(tableNames.data[i]);
+        if (mutexIt != schemaData.tableMutexes.end()) {
+            unique_lock<mutex> lock(mutexIt->second); // Блокировка мьютекса
+            cout << "mutex is locked " << tableNames.data[i] << endl;
+
+            try {
+                BusyTable(pathToCSV, tableNames.data[i] + "_lock.txt", 1);
+                lastID = PkSequenceRead(pathToCSV + "/" + tableNames.data[i] + "_pk_sequence.txt", false, 0);
+            } catch (const std::exception& err) {
+                cerr << err.what() << endl;
+                return;
             }
-            fstream csvFile(tempPath, ios::app);
-            if (!csvFile.is_open()) {
-                throw runtime_error("Failed to open" + tempPath);
+
+            int newID = lastID;
+            for (int j = 0; j < addData.len; j++) {
+                newID++;
+                string tempPath;
+                if (lastID / schemaData.tuplesLimit < newID / schemaData.tuplesLimit) {
+                    tempPath = pathToCSV + "/" + to_string(newID / schemaData.tuplesLimit + 1) + ".csv";
+                } else {
+                    tempPath = pathToCSV + "/" + to_string(lastID / schemaData.tuplesLimit + 1) + ".csv";
+                }
+                fstream csvFile(tempPath, ios::app);
+                if (!csvFile.is_open()) {
+                    throw runtime_error("Failed to open" + tempPath);
+                }
+                csvFile << endl << newID;
+                for (int k = 0; k < addData.data[j]->len; k++) {
+                    csvFile << "," << addData.data[j]->data[k];
+                }
+                csvFile.close();
             }
-            csvFile << endl << newID;
-            for (int k = 0; k < addData.data[j]->len; k++) {
-                csvFile << "," << addData.data[j]->data[k];
-            }
-            csvFile.close();
+            PkSequenceRead(pathToCSV + "/" + tableNames.data[i] + "_pk_sequence.txt", true, newID);
+            BusyTable(pathToCSV, tableNames.data[i] + "_lock.txt", 0);
         }
-        PkSequenceRead(pathToCSV + "/" + tableNames.data[i] + "_pk_sequence.txt", true, newID);
-        BusyTable(pathToCSV, tableNames.data[i] + "_lock.txt", 0);
     }
 }
 
 
-void ParsingInsert(const MyVector<string>& words, const SchemaInfo& schemaData) {
+void ParsingInsert(const MyVector<string>& words, SchemaInfo& schemaData) {
     MyVector<string>* tableNames = CreateVector<string>(5, 50);
     MyVector<MyVector<string>*>* addData = CreateVector<MyVector<string>*>(10, 50);
     bool afterValues = false;

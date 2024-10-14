@@ -75,6 +75,8 @@ void ReadJsonFile(const string& fileName, SchemaInfo& schemaData) {
         CreateFile(schemaData.name + "/" + key, key + "_lock.txt", "0", false);
         CreateFile(schemaData.name + "/" + key, key + "_pk_sequence.txt", "0", false);
         AddMap<string, MyVector<string>*>(*schemaData.jsonStructure, key, tempValue);
+
+        schemaData.tableMutexes[key];    // Создаем мьютекс для этой таблицы!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 
     file.close();

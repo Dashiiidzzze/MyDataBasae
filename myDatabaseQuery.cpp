@@ -5,6 +5,8 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <map>                      // переделать на свой мап!
+#include <mutex>
 
 #include "include/mapDas.h"
 #include "include/vectorDas.h"
@@ -13,8 +15,9 @@
 using namespace std;
 
 // Парсит и выполняет SQL-запросы
-void parsingQuery(const string& query, const SchemaInfo& schemaData, int clientSocket) {
+void parsingQuery(const string& query, SchemaInfo& schemaData, int clientSocket) {
     MyVector<string>* words = Split(query, ' ');
+    //map<string, mutex> tableMutexes; // создание глобальной таблицы мьютексов
     string result;
     if (words->data[0] == "SELECT") {
         try {

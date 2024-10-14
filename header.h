@@ -4,6 +4,9 @@
 #include <fstream>
 #include <filesystem>
 
+#include <map>                      // переделать на свой мап!
+#include <mutex>
+
 #include "include/mapDas.h"
 #include "include/vectorDas.h"
 
@@ -14,6 +17,7 @@ struct SchemaInfo {
     string name;
     int tuplesLimit;
     MyMap<string, MyVector<string>*>* jsonStructure;
+    map<string, mutex> tableMutexes;
 };
 
 // support functions
@@ -66,8 +70,8 @@ void ParsingSelect(const MyVector<string>& words, const SchemaInfo& schemaData);
 string ApostrovDel(string& str);
 void TestAddition(int colLen, const MyVector<string>& tableNames, const MyMap<string, MyVector<string>*>& jsonStructure);
 int PkSequenceRead(const string& path, const bool record, const int newID);
-void InsertInTab(MyVector<MyVector<string>*>& addData, MyVector<string>& tableNames, const SchemaInfo& schemaData);
-void ParsingInsert(const MyVector<string>& words, const SchemaInfo& schemaData);
+void InsertInTab(MyVector<MyVector<string>*>& addData, MyVector<string>& tableNames, SchemaInfo& schemaData);
+void ParsingInsert(const MyVector<string>& words, SchemaInfo& schemaData);
 
 // delete
 void DeleteData(MyVector<string>& tableNames, MyVector<string>& conditionList, const string& schemaName, const string& path, const MyMap<string, MyVector<string>*>& jsonStructure);

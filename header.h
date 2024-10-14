@@ -32,7 +32,6 @@ void BusyTable(const string& path, const string& fileName, const int rank);
 // reading json file
 void CreateDir(const string& pathToDir);
 void CreateFile(const string& pathToFile, const string& fileName, const string& data, bool isDirectory);
-//string ReadJsonFile(const string& fileName, const string& filePath, int& tuplesLimit, MyMap<string, MyVector<string>*>& jsonStructure);
 void ReadJsonFile(const string& fileName, SchemaInfo& schemaData);
 
 // where

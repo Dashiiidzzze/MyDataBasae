@@ -1,14 +1,3 @@
-/*
-#include <string>
-#include <fstream>
-
-#include "include/vectorDas.h"
-
-#include "supportFiles.h"
-
-using namespace std;
-*/
-
 #include "header.h"
 
 // Возвращает длину строки

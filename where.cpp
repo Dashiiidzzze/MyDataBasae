@@ -1,12 +1,3 @@
-/*
-#include "supportFiles.h"
-#include "where.h"
-
-#include <iostream>
-#include <string>
-
-using namespace std;
-*/
 #include "header.h"
 
 string ApostDel(string str) {

@@ -20,7 +20,7 @@ void parsingQuery(const string& query, SchemaInfo& schemaData, int clientSocket)
         try {
             ParsingSelect(*words, schemaData, clientSocket);
         } catch (const exception& err) {
-            result = string("Error: ") + err.what();
+            result = string("Error: ") + err.what() + "\n";
             //cerr << err.what() << endl;
         }
     
@@ -29,7 +29,7 @@ void parsingQuery(const string& query, SchemaInfo& schemaData, int clientSocket)
             ParsingInsert(*words, schemaData);
             result = "successful insert\n";
         } catch (const exception& err) {
-            result = string("Error: ") + err.what();
+            result = string("Error: ") + err.what() + "\n";
             //cerr << err.what() << endl;
         }
     
@@ -38,7 +38,7 @@ void parsingQuery(const string& query, SchemaInfo& schemaData, int clientSocket)
             ParsingDelete(*words, schemaData);
             result = "successful deletion\n";
         } catch (const exception& err) {
-            result = string("Error: ") + err.what();
+            result = string("Error: ") + err.what() + "\n";
             //cerr << err.what() << endl;
         }
         
@@ -160,7 +160,6 @@ int main() {
     cout << "Server is listening on port 7432" << endl;
 
     vector<thread> clientThreads; // Вектор для хранения потоков, обрабатывающих клиентов.
-    //MyVector<thread>* clientThreads = CreateVector<thread>(10, 50);
 
     while (true) {
         int clientSocket; // Сокет для подключения клиента
@@ -178,16 +177,8 @@ int main() {
 
         // Запуск нового потока для обработки
         clientThreads.emplace_back(thread(handleClient, clientSocket));
-        //AddVector<thread>(*clientThreads, thread(handleClient, clientSocket));
     }
-    /*
-    // Ждём завершения всех потоков
-    for (int i = 0; i < clientThreads->len; i++) {
-        if (clientThreads->data[i].joinable()) { // Проверка, что поток можно завершить корректно
-            clientThreads->data[i].join();       // Ожидание завершения потока
-        }
-    }
-    */
+
     // Ждём завершения всех потоков
     for (thread& t : clientThreads) {
         if (t.joinable()) { // Проверка, что поток можно завершить корректно

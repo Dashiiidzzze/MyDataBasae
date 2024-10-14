@@ -58,7 +58,8 @@ void InsertInTab(MyVector<MyVector<string>*>& addData, MyVector<string>& tableNa
                 BusyTable(pathToCSV, tableNames.data[i] + "_lock.txt", 1);
                 lastID = PkSequenceRead(pathToCSV + "/" + tableNames.data[i] + "_pk_sequence.txt", false, 0);
             } catch (const std::exception& err) {
-                cerr << err.what() << endl;
+                throw;
+                //cerr << err.what() << endl;
                 return;
             }
 
@@ -110,7 +111,8 @@ void ParsingInsert(const MyVector<string>& words, SchemaInfo& schemaData) {
                     try {
                         ApostrovDel(words.data[i]);
                     } catch (const exception& err) {
-                        cerr << err.what() << words.data[i] << endl;
+                        throw;
+                        //cerr << err.what() << words.data[i] << endl;
                         return;
                     }
                     
@@ -122,7 +124,8 @@ void ParsingInsert(const MyVector<string>& words, SchemaInfo& schemaData) {
                     AddVector<string>(*tempData, words.data[i]);
                     TestAddition(tempData->len, *tableNames, *schemaData.jsonStructure);
                 } catch (const exception& err) {
-                    cerr << err.what() << endl;
+                    throw;
+                    //cerr << err.what() << endl;
                     return;
                 }
                 AddVector<MyVector<string>*>(*addData, tempData);
@@ -133,7 +136,8 @@ void ParsingInsert(const MyVector<string>& words, SchemaInfo& schemaData) {
             try {
                 GetMap(*schemaData.jsonStructure, words.data[i]);
             } catch (const exception& err) {
-                cerr << err.what() << ": table " << words.data[i] << " is missing" << endl;
+                throw;
+                //cerr << err.what() << ": table " << words.data[i] << " is missing" << endl;
                 return;
             }
             AddVector<string>(*tableNames, words.data[i]);
@@ -146,7 +150,8 @@ void ParsingInsert(const MyVector<string>& words, SchemaInfo& schemaData) {
     try {
         InsertInTab(*addData, *tableNames, schemaData);
     } catch (const exception& err) {
-        cerr << err.what() << endl;
+        throw;
+        //cerr << err.what() << endl;
         return;
     }
 }

@@ -28,10 +28,11 @@ void DeleteData(MyVector<string>& tableNames, MyVector<string>& conditionList, S
                             tempFile << endl << line;
                         }
                     } catch (const exception& err) {
-                        cerr << err.what() << endl;
+                        //cerr << err.what() << endl;
                         tempFile.close();
                         file.close();
                         remove((pathToCSV + "_temp.csv").c_str());
+                        throw;
                         return;
                     }
                 }
@@ -73,7 +74,8 @@ void ParsingDelete(const MyVector<string>& words, SchemaInfo& schemaData) {
             try {
                 GetMap(*schemaData.jsonStructure, words.data[i]);
             } catch (const exception& err) {
-                cerr << err.what() << ": table " << words.data[i] << " is missing" << endl;
+                throw;
+                //cerr << err.what() << ": table " << words.data[i] << " is missing" << endl;
                 return;
             }
             AddVector<string>(*tableNames, words.data[i]);
@@ -86,7 +88,8 @@ void ParsingDelete(const MyVector<string>& words, SchemaInfo& schemaData) {
     try {
         DeleteData(*tableNames, *conditionList, schemaData);
     } catch (const exception& err) {
-        cerr << err.what()<< endl;
+        throw;
+        //cerr << err.what()<< endl;
         return;
     }
 }

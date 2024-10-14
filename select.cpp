@@ -10,7 +10,8 @@ bool AllVritingToVec(Node* nodeWere, const string& tableName, string& line, MyVe
                 AddVector(tabData, row);
             }
         } catch (const exception& err) {
-            cerr << err.what() << endl;
+            throw;
+            //cerr << err.what() << endl;
             return false;
         }
     } else {
@@ -33,7 +34,8 @@ bool VritingToVec(Node* nodeWere, const string& tableName, string& line, MyVecto
                 AddVector(tabData, newRow);
             }
         } catch (const exception& err) {
-            cerr << err.what() << endl;
+            throw;
+            //cerr << err.what() << endl;
             return false;
         }
     } else {
@@ -141,7 +143,8 @@ void PreparationSelect(const MyVector<string>& colNames, const MyVector<string>&
                 try {
                     GetMap(*schemaData.jsonStructure, splitColNames->data[0]);
                 } catch (const exception& err) {
-                    cerr << err.what() << ": table " << splitColNames->data[0] << " is missing" << endl;
+                    throw;
+                    //cerr << err.what() << ": table " << splitColNames->data[0] << " is missing" << endl;
                     return;
                 }
                 if (splitColNames->data[0] == tableNames.data[i]) {
@@ -181,11 +184,10 @@ void ParsingSelect(const MyVector<string>& words, SchemaInfo& schemaData, int cl
             countWhereData++;
             AddVector<string>(*conditionList, words.data[i]);
         } else if (afterFrom) {
-            //GetMap(*schemaData.jsonStructure, words.data[i]);
             try {
                 GetMap(*schemaData.jsonStructure, words.data[i]);
             } catch (const exception& err) {
-                throw runtime_error(err.what() + (": table" + words.data[i] + " is missing"));
+                throw;
                 //cerr << err.what() << ": table " << words.data[i] << " is missing" << endl;
                 return;
             }

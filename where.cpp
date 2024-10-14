@@ -94,7 +94,8 @@ bool isValidRow(Node* node, const MyVector<string>& row, const MyMap<string, MyV
                 }
             }
         } catch (const exception& err) {
-            cerr << err.what() << ": table " << part1Splitted->data[0] << " is missing" << std::endl;
+            throw;
+            //cerr << err.what() << ": table " << part1Splitted->data[0] << " is missing" << std::endl;
             return false;
         }
 

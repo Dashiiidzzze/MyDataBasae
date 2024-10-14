@@ -26,6 +26,7 @@ void TestAddition(int colLen, const MyVector<string>& tableNames, const MyMap<st
     }
 }
 
+// чтение файла с количеством записей и перезапись
 int PkSequenceRead(const string& path, const bool record, const int newID) {
     fstream pkFile(path);
     if (!pkFile.is_open()) {
@@ -47,7 +48,6 @@ void InsertInTab(MyVector<MyVector<string>*>& addData, MyVector<string>& tableNa
         string pathToCSV = schemaData.filepath + "/" + schemaData.name + "/" + tableNames.data[i];
         int lastID = 0;
 
-        //unique_lock<mutex> lock(schemaData.tableMutexes[tableNames.data[i]]);
         // Захватываем мьютекс для таблицы, если она существует в tableMutexes
         auto mutexIt = schemaData.tableMutexes.find(tableNames.data[i]);
         if (mutexIt != schemaData.tableMutexes.end()) {
@@ -87,7 +87,7 @@ void InsertInTab(MyVector<MyVector<string>*>& addData, MyVector<string>& tableNa
     }
 }
 
-
+// разделение запроса вставки на части
 void ParsingInsert(const MyVector<string>& words, SchemaInfo& schemaData) {
     MyVector<string>* tableNames = CreateVector<string>(5, 50);
     MyVector<MyVector<string>*>* addData = CreateVector<MyVector<string>*>(10, 50);

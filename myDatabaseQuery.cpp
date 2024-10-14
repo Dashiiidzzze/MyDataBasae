@@ -5,8 +5,6 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <map>                      // переделать на свой мап!
-#include <mutex>
 
 #include "include/mapDas.h"
 #include "include/vectorDas.h"
@@ -17,12 +15,10 @@ using namespace std;
 // Парсит и выполняет SQL-запросы
 void parsingQuery(const string& query, SchemaInfo& schemaData, int clientSocket) {
     MyVector<string>* words = Split(query, ' ');
-    //map<string, mutex> tableMutexes; // создание глобальной таблицы мьютексов
     string result;
     if (words->data[0] == "SELECT") {
         try {
-            ParsingSelect(*words, schemaData);
-            result = "successful select\n";
+            ParsingSelect(*words, schemaData, clientSocket);
         } catch (const exception& err) {
             result = string("Error: ") + err.what();
             //cerr << err.what() << endl;
@@ -39,7 +35,7 @@ void parsingQuery(const string& query, SchemaInfo& schemaData, int clientSocket)
     
     } else if (words->data[0] == "DELETE" && words->data[1] == "FROM") {
         try {
-            ParsingDelete(*words, schemaData.filepath, schemaData.name, *schemaData.jsonStructure);
+            ParsingDelete(*words, schemaData);
             result = "successful deletion\n";
         } catch (const exception& err) {
             result = string("Error: ") + err.what();
@@ -164,6 +160,7 @@ int main() {
     cout << "Server is listening on port 7432" << endl;
 
     vector<thread> clientThreads; // Вектор для хранения потоков, обрабатывающих клиентов.
+    //MyVector<thread>* clientThreads = CreateVector<thread>(10, 50);
 
     while (true) {
         int clientSocket; // Сокет для подключения клиента
@@ -181,15 +178,23 @@ int main() {
 
         // Запуск нового потока для обработки
         clientThreads.emplace_back(thread(handleClient, clientSocket));
+        //AddVector<thread>(*clientThreads, thread(handleClient, clientSocket));
     }
-
+    /*
+    // Ждём завершения всех потоков
+    for (int i = 0; i < clientThreads->len; i++) {
+        if (clientThreads->data[i].joinable()) { // Проверка, что поток можно завершить корректно
+            clientThreads->data[i].join();       // Ожидание завершения потока
+        }
+    }
+    */
     // Ждём завершения всех потоков
     for (thread& t : clientThreads) {
         if (t.joinable()) { // Проверка, что поток можно завершить корректно
             t.join();       // Ожидание завершения потока
         }
     }
-
+    
     close(serverSocket); // Закрытие серверного сокета после завершения работы
 
     return 0;

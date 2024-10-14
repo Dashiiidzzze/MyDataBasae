@@ -1,201 +1,145 @@
 #include "header.h"
-/*
-// чтение таблицы из файла
-MyVector<MyVector<string>*>* ReadTable(const string& tableName, const MyVector<string>& colNames, const MyVector<string>& conditionList, const SchemaInfo& schemaData, bool where) {
-    string pathToCSV = schemaData.filepath + "/" + schemaData.name + "/" + tableName;
 
-
-    
-    MyVector<MyVector<string>*>* tabData = CreateVector<MyVector<string>*>(5, 50);
-    int fileIndex = 1;
-    try {
-        BusyTable(pathToCSV, tableName + "_lock.txt", 1);
-    } catch (const std::exception& err) {
-        cerr << err.what() << endl;
-        return tabData;
-    }
-    Node* nodeWere = getConditionTree(conditionList);
-    while (filesystem::exists(pathToCSV + "/" + to_string(fileIndex) + ".csv")) {
-        ifstream file(pathToCSV + "/" + to_string(fileIndex) + ".csv");
-        if (!file.is_open()) {
-            throw runtime_error("Failed to open file" + (pathToCSV + "/" + to_string(fileIndex) + ".csv"));
-        }
-        string firstLine;
-        getline(file, firstLine);
-        if (colNames.data[0] == "*") {
-            string line;
-            while (getline(file, line)) {
-                MyVector<string>* row = Split(line, ',');
-                if (where) {
-                    try {
-                        if (isValidRow(nodeWere, *row, *schemaData.jsonStructure, tableName)) {
-                            DeleteVector<string>(*row, 0);
-                            AddVector(*tabData, row);
-                        }
-                    } catch (const exception& err) {
-                        cerr << err.what() << endl;
-                        file.close();
-                        return tabData;
-                    }
-                } else {
-                    DeleteVector<string>(*row, 0);
-                    AddVector(*tabData, row);
-                }
-            }
-        } else {
-            MyVector<string>* fileColNames = GetMap<string, MyVector<string>*>(*schemaData.jsonStructure, tableName);
-            MyVector<int>* colIndex = CreateVector<int>(10, 50);
-            for (int i = 0; i < fileColNames->len; i++) {
-                for (int j = 1; j < colNames.len; j++) {
-                    if (fileColNames->data[i] == colNames.data[j]) {
-                        AddVector(*colIndex, i + 1);
-                    }
-                }
-            }
-            string line;
-            while (getline(file, line)) { 
-                MyVector<string>* row = Split(line, ',');
-                if (where) {
-                    try {
-                        if (isValidRow(nodeWere, *row, *schemaData.jsonStructure, tableName)) {
-                            MyVector<string>* newRow = CreateVector<string>(colIndex->len, 50);
-                            for (int i = 0; i < colIndex->len; i++) {
-                                AddVector(*newRow, row->data[colIndex->data[i]]);
-                            }
-                            AddVector(*tabData, newRow);
-                        }
-                    } catch (const exception& err) {
-                        cerr << err.what() << endl;
-                        file.close();
-                        return tabData;
-                    }
-                } else {
-                    MyVector<string>* newRow = CreateVector<string>(colIndex->len, 50);
-                    for (int i = 0; i < colIndex->len; i++) {
-                        AddVector(*newRow, row->data[colIndex->data[i]]);
-                    }
-                    AddVector(*tabData, newRow);
-                }
-            }
-        }
-
-        file.close();
-        fileIndex += 1;
-    }
-    BusyTable(pathToCSV, tableName + "_lock.txt", 1);
-    return tabData;
-}*/
-
-void FullReadCSVFile(const string& pathToCSV, const int fileIndex, MyVector<MyVector<string>*>& tabData, const SchemaInfo& schemaData) {
-    cout << "fullReadCSVFile" << endl;
-    ifstream file(pathToCSV + "/" + to_string(fileIndex) + ".csv");
-    if (!file.is_open()) {
-        throw runtime_error("Failed to open file" + (pathToCSV + "/" + to_string(fileIndex) + ".csv"));
-    }
-
-    string line;
-    getline(file, line);
-
-    while (getline(file, line)) {
-        MyVector<string>* row = Split(line, ',');
-        for (int i = 0; i < tabData.len; i++) {
-            // добавить проверкку на колонки select
-            // добавить проверку условий where
-
-            AddVector(*tabData.data[i], row->data[i + 1]);
-        }
-    }
-    file.close();
-}
-
-
-MyVector<MyVector<string>*>* ReadTable(const string& tableName, const MyVector<string>& colNames, const MyVector<string>& conditionList, const SchemaInfo& schemaData, bool where) {
-    cout << "ReadTable" << endl;
-    string pathToCSV = schemaData.filepath + "/" + schemaData.name + "/" + tableName;
-    MyVector<MyVector<string>*>* tabData = CreateVector<MyVector<string>*>(10, 50);
-    int fileIndex = 1;
-    try {
-        BusyTable(pathToCSV, tableName + "_lock.txt", 1);
-    } catch (const std::exception& err) {
-        cerr << err.what() << endl;
-        return tabData;
-    }
-    MyVector<string>* columnNames = GetMap<string, MyVector<string>*>(*schemaData.jsonStructure, tableName);
-    for (int i = 0; i < columnNames->len; i++) {
-        MyVector<string>* temp = CreateVector<string>(schemaData.tuplesLimit * 2, 50);
-        AddVector<MyVector<string>*>(*tabData, temp);
-        //AddMap<string, MyVector<string>*>(*tabData, columnNames->data[i], temp);
-    }
-
-    //Node* nodeWere = getConditionTree(conditionList);
-    while (filesystem::exists(pathToCSV + "/" + to_string(fileIndex) + ".csv")) {
+// считвыание всех подходящих строк 
+bool AllVritingToVec(Node* nodeWere, const string& tableName, string& line, MyVector<MyVector<string>*>& tabData, SchemaInfo& schemaData, bool where) {
+    MyVector<string>* row = Split(line, ',');
+    if (where) {
         try {
-            FullReadCSVFile(pathToCSV, fileIndex, *tabData, schemaData);
+            if (isValidRow(nodeWere, *row, *schemaData.jsonStructure, tableName)) {
+                DeleteVector<string>(*row, 0);
+                AddVector(tabData, row);
+            }
         } catch (const exception& err) {
             cerr << err.what() << endl;
-            return tabData;
+            return false;
         }
-        fileIndex++;
+    } else {
+        DeleteVector<string>(*row, 0);
+        AddVector(tabData, row);
     }
+    return true;
+}
 
-    BusyTable(pathToCSV, tableName + "_lock.txt", 1);
+// считывание подходящих строк из выбранных столбцов
+bool VritingToVec(Node* nodeWere, const string& tableName, string& line, MyVector<MyVector<string>*>& tabData, SchemaInfo& schemaData, bool where, MyVector<int>& colIndex) {
+    MyVector<string>* row = Split(line, ',');
+    MyVector<string>* newRow = CreateVector<string>(colIndex.len, 50);
+    if (where) {
+        try {
+            if (isValidRow(nodeWere, *row, *schemaData.jsonStructure, tableName)) {
+                for (int i = 0; i < colIndex.len; i++) {
+                    AddVector(*newRow, row->data[colIndex.data[i]]);
+                }
+                AddVector(tabData, newRow);
+            }
+        } catch (const exception& err) {
+            cerr << err.what() << endl;
+            return false;
+        }
+    } else {
+        for (int i = 0; i < colIndex.len; i++) {
+            AddVector(*newRow, row->data[colIndex.data[i]]);
+        }
+        AddVector(tabData, newRow);
+    }
+    return true;
+}
 
+
+
+// чтение таблицы из файла
+MyVector<MyVector<string>*>* ReadTable(const string& tableName, SchemaInfo& schemaData, const MyVector<string>& colNames, const MyVector<string>& conditionList, bool where) {
+    MyVector<MyVector<string>*>* tabData = CreateVector<MyVector<string>*>(5, 50);
+    string pathToCSV = schemaData.filepath + "/" + schemaData.name + "/" + tableName;
+    int fileIndex = 1;
+
+    // Захватываем мьютекс для таблицы, если она существует в tableMutexes
+    auto mutexIt = schemaData.tableMutexes.find(tableName);
+    if (mutexIt != schemaData.tableMutexes.end()) {
+        unique_lock<mutex> lock(mutexIt->second); // Блокировка мьютекса
+        
+        Node* nodeWere = getConditionTree(conditionList);
+        while (filesystem::exists(pathToCSV + "/" + to_string(fileIndex) + ".csv")) {
+            ifstream file(pathToCSV + "/" + to_string(fileIndex) + ".csv");
+            if (!file.is_open()) {
+                throw runtime_error("Failed to open file" + (pathToCSV + "/" + to_string(fileIndex) + ".csv"));
+            }
+            string firstLine;
+            getline(file, firstLine);
+            if (colNames.data[0] == "*") {
+                string line;
+                while (getline(file, line)) {
+                    if (!AllVritingToVec(nodeWere, tableName, line, *tabData, schemaData, where)) {
+                        file.close();
+                        return tabData;
+                    }
+                }
+            } else {
+                MyVector<string>* fileColNames = GetMap<string, MyVector<string>*>(*schemaData.jsonStructure, tableName);
+                MyVector<int>* colIndex = CreateVector<int>(10, 50);
+                for (int i = 0; i < fileColNames->len; i++) {
+                    for (int j = 1; j < colNames.len; j++) {
+                        if (fileColNames->data[i] == colNames.data[j]) {
+                            AddVector(*colIndex, i + 1);
+                        }
+                    }
+                }
+                string line;
+                while (getline(file, line)) {
+                    if (!VritingToVec(nodeWere, tableName, line, *tabData, schemaData, where, *colIndex)) {
+                        file.close();
+                        return tabData;
+                    }
+                }
+            }
+
+            file.close();
+            fileIndex += 1;
+        }
+    }
     return tabData;
 }
 
-/*
+
 // вывод содержимого таблиц в виде декартового произведения
-void DecartMult(const MyVector<MyVector<MyVector<string>*>*>& tablesData, MyVector<MyVector<string>*>& temp, int counterTab, int tab) {
+void DecartMult(const MyVector<MyVector<MyVector<string>*>*>& tablesData, MyVector<MyVector<string>*>& temp, int counterTab, int tab, int clientSocket) {
     for (int i = 0; i < tablesData.data[counterTab]->len; i++) {
         temp.data[counterTab] = tablesData.data[counterTab]->data[i];
 
         if (counterTab < tab - 1) {
-            DecartMult(tablesData, temp, counterTab + 1, tab);
+            DecartMult(tablesData, temp, counterTab + 1, tab, clientSocket);
         } else {
             for (int j = 0; j < tab; j++) {
-                cout << *temp.data[j] << std::setw(25);
+                for (int k = 0; k < temp.data[j]->len; k++) {
+                    send(clientSocket, (temp.data[j]->data[k] + "   ").c_str(), (temp.data[j]->data[k] + "   ").size(), 0);
+                }
+                //cout << *temp.data[j] << setw(25);
             }
-            cout << endl;
+            string enter = "\n";
+            send(clientSocket, enter.c_str(), enter.size(), 0);
+            //cout << endl;
         }
     }
 
     return;
-}*/
-
-void DecartMult(const MyMap<string, MyVector<MyVector<string>*>*>& tablesData, const MyVector<string>& colNames) {
-    cout << "DecartMult" << endl;
-    for (int i = 0; i < colNames.len; i++) {
-        //MyVector<string>* tabColPair = Split(colNames.data[i], '.');
-
-        MyVector<MyVector<string>*>* table = GetMap(tablesData, colNames.data[i]);
-        for (int j =  0; j < table->len; j++) {
-            cout << table->data[j]->data[1] << setw(25);
-        }
-        cout << endl;
-    }
 }
 
 // подготовка к чтению и выводу данных
-void PreparationSelect(const MyVector<string>& colNames, const MyVector<string>& tableNames, const MyVector<string>& conditionList, const SchemaInfo& schemaData, bool where) {
-    //MyVector<MyVector<MyVector<string>*>*>* tablesData = CreateVector<MyVector<MyVector<string>*>*>(10, 50);
-    MyMap<string, MyVector<MyVector<string>*>*>* tablesData = CreateMap<string, MyVector<MyVector<string>*>*>(10, 50);
+void PreparationSelect(const MyVector<string>& colNames, const MyVector<string>& tableNames, const MyVector<string>& conditionList, SchemaInfo& schemaData, bool where, int clientSocket) {
+    MyVector<MyVector<MyVector<string>*>*>* tablesData = CreateVector<MyVector<MyVector<string>*>*>(10, 50);
     if (colNames.data[0] == "*") {      // чтение всех данных из таблиц
         for (int j = 0; j < tableNames.len; j++) {
-            MyVector<MyVector<string>*>* table = ReadTable(tableNames.data[j], colNames, conditionList, schemaData, where);
-            AddMap(*tablesData, tableNames.data[j], table);
+            MyVector<MyVector<string>*>* tableData = ReadTable(tableNames.data[j], schemaData, colNames, conditionList, where);
+            AddVector(*tablesData, tableData);
         }
     } else {
-        /*
         for (int i = 0; i < tableNames.len; i++) {
-
-
-
             MyVector<string>* tabColPair = CreateVector<string>(5, 50);
             AddVector(*tabColPair, tableNames.data[i]);
             for (int j = 0; j < colNames.len; j++) {
                 MyVector<string>* splitColNames = Split(colNames.data[j], '.');
                 try {
-                    GetMap(jsonStructure, splitColNames->data[0]);
+                    GetMap(*schemaData.jsonStructure, splitColNames->data[0]);
                 } catch (const exception& err) {
                     cerr << err.what() << ": table " << splitColNames->data[0] << " is missing" << endl;
                     return;
@@ -204,21 +148,19 @@ void PreparationSelect(const MyVector<string>& colNames, const MyVector<string>&
                     AddVector(*tabColPair, splitColNames->data[1]);
                 }
             }
-            MyVector<MyVector<string>*>* tableData = ReadTable(tabColPair->data[0], schemaName, filePath, *tabColPair, conditionList, jsonStructure, where);
+            MyVector<MyVector<string>*>* tableData = ReadTable(tabColPair->data[0], schemaData, *tabColPair, conditionList, where);
             AddVector(*tablesData, tableData);
-        }*/
+        }
     }
-    //MyVector<MyVector<string>*>* temp = CreateVector<MyVector<string>*>(tablesData->len * 2, 50);
-    //DecartMult(*tablesData, *temp, 0, tablesData->len);
-    //DecartMult(*tablesData, colNames);
-    //MyVector<string>* temp = GetMap(*schemaData.jsonStructure, )           CreateVector<string>(tablesData->len * 2, 50);
-    DecartMult(*tablesData, tableNames);
+
+    MyVector<MyVector<string>*>* temp = CreateVector<MyVector<string>*>(tablesData->len * 2, 50);
+    string resStr;
+    DecartMult(*tablesData, *temp, 0, tablesData->len, clientSocket);
+    return;
 }
 
-
-
 // парсинг SELECT запроса
-void ParsingSelect(const MyVector<string>& words, const SchemaInfo& schemaData) {
+void ParsingSelect(const MyVector<string>& words, SchemaInfo& schemaData, int clientSocket) {
     MyVector<string>* colNames = CreateVector<string>(10, 50);          // названия колонок в формате таблица1.колонка1
     MyVector<string>* tableNames = CreateVector<string>(10, 50);        // названия таблиц в формате  таблица1
     MyVector<string>* conditionList = CreateVector<string>(10, 50);     // список условий where
@@ -239,10 +181,12 @@ void ParsingSelect(const MyVector<string>& words, const SchemaInfo& schemaData) 
             countWhereData++;
             AddVector<string>(*conditionList, words.data[i]);
         } else if (afterFrom) {
+            //GetMap(*schemaData.jsonStructure, words.data[i]);
             try {
                 GetMap(*schemaData.jsonStructure, words.data[i]);
             } catch (const exception& err) {
-                cerr << err.what() << ": table " << words.data[i] << " is missing" << endl;
+                throw runtime_error(err.what() + (": table" + words.data[i] + " is missing"));
+                //cerr << err.what() << ": table " << words.data[i] << " is missing" << endl;
                 return;
             }
             countTabNames++;
@@ -255,10 +199,9 @@ void ParsingSelect(const MyVector<string>& words, const SchemaInfo& schemaData) 
     if (countTabNames == 0 || countData == 0) {
         throw runtime_error("missing table name or data in FROM");
     }
-    cout << "dddd" << endl;
-    if (countWhereData == 0) {
-        PreparationSelect(*colNames, *tableNames, *conditionList, schemaData, false);
+    if (countWhereData == 0) { //const string& schemaName, const string& filePath, const MyMap<string, MyVector<string>*>& jsonStructure
+        PreparationSelect(*colNames, *tableNames, *conditionList, schemaData, false, clientSocket);
     } else {
-        PreparationSelect(*colNames, *tableNames, *conditionList, schemaData, true);
+        PreparationSelect(*colNames, *tableNames, *conditionList, schemaData, true, clientSocket);
     }
 }

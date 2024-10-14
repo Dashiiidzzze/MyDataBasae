@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 #include <map>                      // переделать на свой мап!
 #include <mutex>
@@ -60,10 +62,12 @@ bool isValidRow(Node* node, const MyVector<string>& row, const MyMap<string, MyV
 
 
 // select
-MyVector<MyVector<string>*>* ReadTable(const string& tableName, const string& schemaName, const string& filePath, const MyVector<string>& colNames, const MyVector<string>& conditionList, const MyMap<string, MyVector<string>*>& jsonStructure, bool where);
-void DecartMult(const MyVector<MyVector<MyVector<string>*>*>& tablesData, MyVector<MyVector<string>*>& temp, int counterTab, int tab);
-void PreparationSelect(const MyVector<string>& colNames, const MyVector<string>& tableNames, const MyVector<string>& conditionList, const string& schemaName, const string& filePath, const MyMap<string, MyVector<string>*>& jsonStructure, bool where);
-void ParsingSelect(const MyVector<string>& words, const SchemaInfo& schemaData);
+bool AllVritingToVec(Node* nodeWere, const string& tableName, string& line, MyVector<MyVector<string>*>& tabData, SchemaInfo& schemaData, bool where);
+bool VritingToVec(Node* nodeWere, const string& tableName, string& line, MyVector<MyVector<string>*>& tabData, SchemaInfo& schemaData, bool where, MyVector<int>& colIndex);
+MyVector<MyVector<string>*>* ReadTable(const string& tableName, SchemaInfo& schemaData, const MyVector<string>& colNames, const MyVector<string>& conditionList, bool where);
+void DecartMult(const MyVector<MyVector<MyVector<string>*>*>& tablesData, MyVector<MyVector<string>*>& temp, int counterTab, int tab, int clientSocket);
+void PreparationSelect(const MyVector<string>& colNames, const MyVector<string>& tableNames, const MyVector<string>& conditionList, SchemaInfo& schemaData, bool where, int clientSocket);
+void ParsingSelect(const MyVector<string>& words, SchemaInfo& schemaData, int clientSocket);
 
 
 // insert
@@ -74,5 +78,5 @@ void InsertInTab(MyVector<MyVector<string>*>& addData, MyVector<string>& tableNa
 void ParsingInsert(const MyVector<string>& words, SchemaInfo& schemaData);
 
 // delete
-void DeleteData(MyVector<string>& tableNames, MyVector<string>& conditionList, const string& schemaName, const string& path, const MyMap<string, MyVector<string>*>& jsonStructure);
-void ParsingDelete(const MyVector<string>& words, const string& filePath, const string& schemaName, const MyMap<string, MyVector<string>*>& jsonStructure);
+void DeleteData(MyVector<string>& tableNames, MyVector<string>& conditionList, SchemaInfo& schemaData);
+void ParsingDelete(const MyVector<string>& words, SchemaInfo& schemaData);

@@ -1,10 +1,4 @@
-#include <iostream>
-#include <fstream>
-
-#include "supportFiles.h"
-#include "insert.h"
-
-using namespace std;
+#include "header.h"
 
 // удаление опострафа и проверка синтаксиса
 string ApostrovDel(string& str) {
@@ -32,6 +26,7 @@ void TestAddition(int colLen, const MyVector<string>& tableNames, const MyMap<st
     }
 }
 
+// чтение файла с количеством записей и перезапись
 int PkSequenceRead(const string& path, const bool record, const int newID) {
     fstream pkFile(path);
     if (!pkFile.is_open()) {
@@ -48,43 +43,53 @@ int PkSequenceRead(const string& path, const bool record, const int newID) {
 }
 
 // добавление строк в файл
-void InsertInTab(MyVector<MyVector<string>*>& addData, MyVector<string>& tableNames, const string& schemaName, const int tuplesLimit, const string& filePath) {
+void InsertInTab(MyVector<MyVector<string>*>& addData, MyVector<string>& tableNames, SchemaInfo& schemaData) {
     for (int i = 0; i < tableNames.len; i++) {
+        string pathToCSV = schemaData.filepath + "/" + schemaData.name + "/" + tableNames.data[i];
         int lastID = 0;
-        try {
-            BusyTable(filePath + "/" + schemaName + "/" + tableNames.data[i], tableNames.data[i] + "_lock.txt", 1);
-            lastID = PkSequenceRead(filePath + "/" + schemaName + "/" + tableNames.data[i] + "/" + tableNames.data[i] + "_pk_sequence.txt", false, 0);
-        } catch (const std::exception& err) {
-            cerr << err.what() << endl;
-            return;
-        }
 
-        int newID = lastID;
-        for (int j = 0; j < addData.len; j++) {
-            newID++;
-            string tempPath;
-            if (lastID / tuplesLimit < newID / tuplesLimit) {
-                tempPath = filePath + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(newID / tuplesLimit + 1) + ".csv";
-            } else {
-                tempPath = filePath + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(lastID / tuplesLimit + 1) + ".csv";
+        // Захватываем мьютекс для таблицы, если она существует в tableMutexes
+        auto mutexIt = schemaData.tableMutexes.find(tableNames.data[i]);
+        if (mutexIt != schemaData.tableMutexes.end()) {
+            unique_lock<mutex> lock(mutexIt->second); // Блокировка мьютекса
+            cout << "mutex is locked " << tableNames.data[i] << endl;
+
+            try {
+                BusyTable(pathToCSV, tableNames.data[i] + "_lock.txt", 1);
+                lastID = PkSequenceRead(pathToCSV + "/" + tableNames.data[i] + "_pk_sequence.txt", false, 0);
+            } catch (const std::exception& err) {
+                throw;
+                //cerr << err.what() << endl;
+                return;
             }
-            fstream csvFile(tempPath, ios::app);
-            if (!csvFile.is_open()) {
-                throw runtime_error("Failed to open" + tempPath);
+
+            int newID = lastID;
+            for (int j = 0; j < addData.len; j++) {
+                newID++;
+                string tempPath;
+                if (lastID / schemaData.tuplesLimit < newID / schemaData.tuplesLimit) {
+                    tempPath = pathToCSV + "/" + to_string(newID / schemaData.tuplesLimit + 1) + ".csv";
+                } else {
+                    tempPath = pathToCSV + "/" + to_string(lastID / schemaData.tuplesLimit + 1) + ".csv";
+                }
+                fstream csvFile(tempPath, ios::app);
+                if (!csvFile.is_open()) {
+                    throw runtime_error("Failed to open" + tempPath);
+                }
+                csvFile << endl << newID;
+                for (int k = 0; k < addData.data[j]->len; k++) {
+                    csvFile << "," << addData.data[j]->data[k];
+                }
+                csvFile.close();
             }
-            csvFile << endl << newID;
-            for (int k = 0; k < addData.data[j]->len; k++) {
-                csvFile << "," << addData.data[j]->data[k];
-            }
-            csvFile.close();
+            PkSequenceRead(pathToCSV + "/" + tableNames.data[i] + "_pk_sequence.txt", true, newID);
+            BusyTable(pathToCSV, tableNames.data[i] + "_lock.txt", 0);
         }
-        PkSequenceRead(filePath + "/" + schemaName + "/" + tableNames.data[i] + "/" + tableNames.data[i] + "_pk_sequence.txt", true, newID);
-        BusyTable(filePath + "/" + schemaName + "/" + tableNames.data[i], tableNames.data[i] + "_lock.txt", 0);
     }
 }
 
-
-void ParsingInsert(const MyVector<string>& words, const string& filePath, const string& schemaName, const int tuplesLimit, const MyMap<string, MyVector<string>*>& jsonStructure) {
+// разделение запроса вставки на части
+void ParsingInsert(const MyVector<string>& words, SchemaInfo& schemaData) {
     MyVector<string>* tableNames = CreateVector<string>(5, 50);
     MyVector<MyVector<string>*>* addData = CreateVector<MyVector<string>*>(10, 50);
     bool afterValues = false;
@@ -106,7 +111,8 @@ void ParsingInsert(const MyVector<string>& words, const string& filePath, const 
                     try {
                         ApostrovDel(words.data[i]);
                     } catch (const exception& err) {
-                        cerr << err.what() << words.data[i] << endl;
+                        throw;
+                        //cerr << err.what() << words.data[i] << endl;
                         return;
                     }
                     
@@ -116,9 +122,10 @@ void ParsingInsert(const MyVector<string>& words, const string& filePath, const 
                 try {
                     ApostrovDel(words.data[i]);
                     AddVector<string>(*tempData, words.data[i]);
-                    TestAddition(tempData->len, *tableNames, jsonStructure);
+                    TestAddition(tempData->len, *tableNames, *schemaData.jsonStructure);
                 } catch (const exception& err) {
-                    cerr << err.what() << endl;
+                    throw;
+                    //cerr << err.what() << endl;
                     return;
                 }
                 AddVector<MyVector<string>*>(*addData, tempData);
@@ -127,9 +134,10 @@ void ParsingInsert(const MyVector<string>& words, const string& filePath, const 
         } else {
             countTabNames++;
             try {
-                GetMap(jsonStructure, words.data[i]);
+                GetMap(*schemaData.jsonStructure, words.data[i]);
             } catch (const exception& err) {
-                cerr << err.what() << ": table " << words.data[i] << " is missing" << endl;
+                throw;
+                //cerr << err.what() << ": table " << words.data[i] << " is missing" << endl;
                 return;
             }
             AddVector<string>(*tableNames, words.data[i]);
@@ -140,9 +148,10 @@ void ParsingInsert(const MyVector<string>& words, const string& filePath, const 
     }
 
     try {
-        InsertInTab(*addData, *tableNames, schemaName, tuplesLimit, filePath);
+        InsertInTab(*addData, *tableNames, schemaData);
     } catch (const exception& err) {
-        cerr << err.what() << endl;
+        throw;
+        //cerr << err.what() << endl;
         return;
     }
 }

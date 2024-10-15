@@ -1,0 +1,8 @@
+{
+    "name": "sandwich",
+    "tuples_limit": 20,
+    "structure": {
+        "sausage": ["maker", "name", "price", "grade"],
+        "bread": ["maker", "name", "price", "grade"]
+    }
+}

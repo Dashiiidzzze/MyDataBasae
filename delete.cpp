@@ -1,65 +1,60 @@
-#include <iostream>
-#include <fstream>
-#include <filesystem>
+#include "header.h"
 
-#include "where.h"
-#include "supportFiles.h"
-#include "delete.h"
-
-using namespace std; 
-
-void DeleteData(MyVector<string>& tableNames, MyVector<string>& conditionList, const string& schemaName, const string& path, const MyMap<string, MyVector<string>*>& jsonStructure) {
+// перезапись во временный файл информации кроме удаленной
+void DeleteData(MyVector<string>& tableNames, MyVector<string>& conditionList, SchemaInfo& schemaData) {
     Node* nodeWere = getConditionTree(conditionList);
+     
     for (int i = 0; i < tableNames.len; i++) {
         int fileIndex = 1;
-        try {
-            BusyTable(path + "/" + schemaName + "/" + tableNames.data[i], tableNames.data[i] + "_lock.txt", 1);
-        } catch (const std::exception& err) {
-            cerr << err.what() << endl;
-            return;
-        }
-        while (filesystem::exists(path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + ".csv")) {
-            ifstream file(path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + ".csv");
-            if (!file.is_open()) {
-                throw runtime_error("Failed to open " + (path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + ".csv"));
-            }
-            ofstream tempFile(path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + "_temp.csv");
+        string pathToCSV = schemaData.filepath + "/" + schemaData.name + "/" + tableNames.data[i] + "/" + to_string(fileIndex);
+        auto mutexIt = schemaData.tableMutexes.find(tableNames.data[i]);
+        if (mutexIt != schemaData.tableMutexes.end()) {
+            unique_lock<mutex> lock(mutexIt->second); // Блокировка мьютекса
+        
+            while (filesystem::exists(pathToCSV + ".csv")) {
+                ifstream file(pathToCSV + ".csv");
+                if (!file.is_open()) {
+                    throw runtime_error("Failed to open " + (pathToCSV + ".csv"));
+                }
+                ofstream tempFile(pathToCSV + "_temp.csv");
 
-            string line;
-            getline(file, line);
-            tempFile << line;
-            while (getline(file, line)) {
-                MyVector<string>* row = Split(line, ',');
-                try {
-                    if (!isValidRow(nodeWere, *row, jsonStructure, tableNames.data[i])) {
-                        tempFile << endl << line;
+                string line;
+                getline(file, line);
+                tempFile << line;
+                while (getline(file, line)) {
+                    MyVector<string>* row = Split(line, ',');
+                    try {
+                        if (!isValidRow(nodeWere, *row, *schemaData.jsonStructure, tableNames.data[i])) {
+                            tempFile << endl << line;
+                        }
+                    } catch (const exception& err) {
+                        //cerr << err.what() << endl;
+                        tempFile.close();
+                        file.close();
+                        remove((pathToCSV + "_temp.csv").c_str());
+                        throw;
+                        return;
                     }
-                } catch (const exception& err) {
-                    cerr << err.what() << endl;
-                    tempFile.close();
-                    file.close();
-                    std::remove((path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + "_temp.csv").c_str());
+                }
+                tempFile.close();
+                file.close();
+                if (remove((pathToCSV + ".csv").c_str()) != 0) {
+                    cerr << "Error deleting file" << endl;
                     return;
                 }
-            }
-            tempFile.close();
-            file.close();
-            if (std::remove((path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + ".csv").c_str()) != 0) {
-                std::cerr << "Error deleting file" << std::endl;
-                return;
-            }
-            if (std::rename((path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + "_temp.csv").c_str(), (path + "/" + schemaName + "/" + tableNames.data[i] + "/" + to_string(fileIndex) + ".csv").c_str()) != 0) {
-                std::cerr << "Error renaming file" << std::endl;
-                return;
-            }
+                if (rename((pathToCSV + "_temp.csv").c_str(), (pathToCSV + ".csv").c_str()) != 0) {
+                    cerr << "Error renaming file" << endl;
+                    return;
+                }
 
-            fileIndex++;
+                fileIndex++;
+            }
         }
-        BusyTable(path + "/" + schemaName + "/" + tableNames.data[i], tableNames.data[i] + "_lock.txt", 0);
     }
 }
 
-void ParsingDelete(const MyVector<string>& words, const string& filePath, const string& schemaName, const MyMap<string, MyVector<string>*>& jsonStructure) {
+// разбиение запроса удаления на кусочки
+void ParsingDelete(const MyVector<string>& words, SchemaInfo& schemaData) {
     MyVector<string>* tableNames = CreateVector<string>(5, 50);
     MyVector<string>* conditionList = CreateVector<string>(5, 50);
     int countTabNames = 0;
@@ -77,9 +72,10 @@ void ParsingDelete(const MyVector<string>& words, const string& filePath, const 
         } else {
             countTabNames++;
             try {
-                GetMap(jsonStructure, words.data[i]);
+                GetMap(*schemaData.jsonStructure, words.data[i]);
             } catch (const exception& err) {
-                cerr << err.what() << ": table " << words.data[i] << " is missing" << endl;
+                throw;
+                //cerr << err.what() << ": table " << words.data[i] << " is missing" << endl;
                 return;
             }
             AddVector<string>(*tableNames, words.data[i]);
@@ -90,9 +86,10 @@ void ParsingDelete(const MyVector<string>& words, const string& filePath, const 
     }
 
     try {
-        DeleteData(*tableNames, *conditionList, schemaName, filePath, jsonStructure);
+        DeleteData(*tableNames, *conditionList, schemaData);
     } catch (const exception& err) {
-        cerr << err.what()<< endl;
+        throw;
+        //cerr << err.what()<< endl;
         return;
     }
 }

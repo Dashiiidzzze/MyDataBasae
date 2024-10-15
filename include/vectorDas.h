@@ -27,8 +27,7 @@ std::ostream& operator << (std::ostream& os, const MyVector<T>& vec) {
 // инициализация вектора
 template <typename T>
 MyVector<T>* CreateVector(int initCapacity, int initLoadFactor) {
-    if (initCapacity <= 0 || initLoadFactor <= 0 || initLoadFactor > 100) {     //ДОДЕЛАТЬ ИСКЛЮЧЕНИЯ КАК В РГР
-        // cout << "Error initializing vector" << endl;
+    if (initCapacity <= 0 || initLoadFactor <= 0 || initLoadFactor > 100) {
         throw std::runtime_error("Index out of range");
     }
 

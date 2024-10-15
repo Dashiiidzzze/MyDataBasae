@@ -1,24 +1,18 @@
-#include "supportFiles.h"
-#include "where.h"
+#include "header.h"
 
-#include <iostream>
-#include <string>
-
-using namespace std;
-
-std::string ApostDel(std::string str) {
+string ApostDel(string str) {
     if (str[0] == '\'' && str[str.size() - 1] == '\'') {
         str = Substr(str, 1, str.size() - 1);
         return str;
     } else {
-        throw std::runtime_error("invalid sintaxis in WHERE " + str);
+        throw runtime_error("invalid sintaxis in WHERE " + str);
     }
 }
 
 // Вспомогательная функция для разделения строки по оператору
-MyVector<MyVector<std::string>*>* splitByOperator(const MyVector<std::string>& query, const std::string& op) {
-    MyVector<std::string>* left = CreateVector<std::string>(6, 50);
-    MyVector<std::string>* right = CreateVector<std::string>(6, 50);
+MyVector<MyVector<string>*>* splitByOperator(const MyVector<string>& query, const string& op) {
+    MyVector<string>* left = CreateVector<string>(6, 50);
+    MyVector<string>* right = CreateVector<string>(6, 50);
     bool afterOp = false;
     for (int i = 0; i < query.len; i++) {
         if (query.data[i] == op) {
@@ -29,7 +23,7 @@ MyVector<MyVector<std::string>*>* splitByOperator(const MyVector<std::string>& q
             AddVector(*left, query.data[i]);
         }
     }
-    MyVector<MyVector<std::string>*>* parseVector = CreateVector<MyVector<std::string>*>(5, 50);
+    MyVector<MyVector<string>*>* parseVector = CreateVector<MyVector<string>*>(5, 50);
     if (afterOp) {
         AddVector(*parseVector, left);
         AddVector(*parseVector, right);
@@ -41,8 +35,8 @@ MyVector<MyVector<std::string>*>* splitByOperator(const MyVector<std::string>& q
 }
 
 
-Node* getConditionTree(const MyVector<std::string>& query) {
-    MyVector<MyVector<std::string>*>* orParts = splitByOperator(query, "OR");
+Node* getConditionTree(const MyVector<string>& query) {
+    MyVector<MyVector<string>*>* orParts = splitByOperator(query, "OR");
 
     // OR
     if (orParts->len > 1) {
@@ -64,7 +58,7 @@ Node* getConditionTree(const MyVector<std::string>& query) {
     return new Node(NodeType::ConditionNode, query);
 }
 
-bool isValidRow(Node* node, const MyVector<std::string>& row, const MyMap<std::string, MyVector<std::string>*>& jsonStructure, const std::string& tabNames) {
+bool isValidRow(Node* node, const MyVector<string>& row, const MyMap<string, MyVector<string>*>& jsonStructure, const string& tabNames) {
     if (!node) {
         return false;
     }
@@ -75,7 +69,7 @@ bool isValidRow(Node* node, const MyVector<std::string>& row, const MyMap<std::s
             return false;
         }
 
-        MyVector<std::string> *part1Splitted = Split(node->value.data[0], '.');
+        MyVector<string> *part1Splitted = Split(node->value.data[0], '.');
         if (part1Splitted->len != 2) {
             return false;
         }
@@ -83,24 +77,25 @@ bool isValidRow(Node* node, const MyVector<std::string>& row, const MyMap<std::s
         // существует ли запрашиваемая таблица
         int columnIndex = -1;
         try {
-            MyVector<std::string>* colNames = GetMap(jsonStructure, part1Splitted->data[0]);
+            MyVector<string>* colNames = GetMap(jsonStructure, part1Splitted->data[0]);
             for (int i = 0; i < colNames->len; i++) {
                 if (colNames->data[i] == part1Splitted->data[1]) {
                     columnIndex = i;
                     break;
                 }
             }
-        } catch (const std::exception& err) {
-            std::cerr << err.what() << ": table " << part1Splitted->data[0] << " is missing" << std::endl;
+        } catch (const exception& err) {
+            throw;
+            //cerr << err.what() << ": table " << part1Splitted->data[0] << " is missing" << std::endl;
             return false;
         }
 
         if (columnIndex == -1) {
-            std::cerr << "Column " << part1Splitted->data[1] << " is missing in table " << part1Splitted->data[0] << std::endl;
+            cerr << "Column " << part1Splitted->data[1] << " is missing in table " << part1Splitted->data[0] << std::endl;
             return false;
         }
 
-        std::string delApostr = ApostDel(node->value.data[2]);
+        string delApostr = ApostDel(node->value.data[2]);
         if (tabNames == part1Splitted->data[0] && row.data[columnIndex + 1] == delApostr) {
             return true;
         }

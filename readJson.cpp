@@ -1,15 +1,7 @@
-#include <iostream>
-#include <fstream>
-
+#include "header.h"
 #include "include/json.hpp"
-//#include "include/mapDas.h"
-//#include "include/vectorDas.h"
-#include "readJson.h"
 
 using json = nlohmann::json;
-
-using namespace std;
-
 
 // создание директории
 void CreateDir(const string& pathToDir) {
@@ -24,13 +16,13 @@ void CreateDir(const string& pathToDir) {
 void CreateFile(const string& pathToFile, const string& fileName, const string& data, bool isDirectory) {
     filesystem::path path(pathToFile);
     if (filesystem::exists(path / fileName)) {
-        if (isDirectory) {
+        if (isDirectory) {  // если это файл с таблицей
             ifstream file(path / fileName);
             string line;
             getline(file, line);
-            if (line == data) {
+            if (line == data) { // данные уже есть в файле
                 file.close();
-                return; // данные уже есть в файле
+                return;
             }
             file.close();
         } else {
@@ -49,8 +41,8 @@ void CreateFile(const string& pathToFile, const string& fileName, const string& 
 
 
 // чтение json файла и создание директорий
-string ReadJsonFile(const string& fileName, const string& filePath, int& tuplesLimit, MyMap<string, MyVector<string>*>& jsonStructure) {
-    ifstream file(filePath + "/" + fileName);
+void ReadJsonFile(const string& fileName, SchemaInfo& schemaData) {
+    ifstream file(schemaData.filepath + "/" + fileName);
     if (!file.is_open()) {
         throw runtime_error("Failed to open schema.json");
     }
@@ -60,39 +52,32 @@ string ReadJsonFile(const string& fileName, const string& filePath, int& tuplesL
     file >> schema;
 
     // чтение имени таблицы
-    string schemaName = schema["name"];
-    CreateDir(schemaName);
+    schemaData.name = schema["name"];
+    CreateDir(schemaData.name);
 
     // чтение максимального количества ключей
-    tuplesLimit = schema["tuples_limit"];
+    schemaData.tuplesLimit = schema["tuples_limit"];
 
     // чтение структуры таблицы
     json tableStructure = schema["structure"];
     for (auto& [key, value] : tableStructure.items()) {
-        //cout << "test 1" << endl;
         // создание директорий
-        CreateDir(schemaName + "/" + key);
+        CreateDir(schemaData.name + "/" + key);
         MyVector<string>* tempValue = CreateVector<string>(10, 50);
-        //cout << "test 2" << endl;
         string colNames = key + "_pk";
         for (auto columns : value) {
             colNames += ",";
             string temp = columns;
             colNames += temp;
-            //cout << "test 3" << endl;
             AddVector(*tempValue, temp);
         }
-        //cout << "test 4" << endl;
-        CreateFile(schemaName + "/" + key, "1.csv", colNames, true);
-        CreateFile(schemaName + "/" + key, key + "_lock.txt", "0", false);
-        CreateFile(schemaName + "/" + key, key + "_pk_sequence.txt", "0", false);
-        //cout << "test 5" << endl;
-        //cout << key << endl;
-        AddMap<string, MyVector<string>*>(jsonStructure, key, tempValue);
-        //cout << *tempValue << endl;
-        //cout << *GetMap<string, MyVector<string>*>(jsonStructure, key) << endl;
+        CreateFile(schemaData.name + "/" + key, "1.csv", colNames, true);
+        CreateFile(schemaData.name + "/" + key, key + "_lock.txt", "0", false);
+        CreateFile(schemaData.name + "/" + key, key + "_pk_sequence.txt", "0", false);
+        AddMap<string, MyVector<string>*>(*schemaData.jsonStructure, key, tempValue);
+
+        schemaData.tableMutexes[key];    // Создаем мьютекс для этой таблицы!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 
     file.close();
-    return schemaName;
 }
